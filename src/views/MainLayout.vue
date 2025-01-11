@@ -2,35 +2,17 @@
   <el-container class="dcontainer">
     <el-header class="header" style="--header-height: 8vh">
       <h5 class="card-title">金牛区水系图</h5>
-      <!-- <div class="header-buttons">
-        <el-button @click="showOverview">总览图</el-button>
-        <el-button @click="showExample">示例图</el-button>
-        <el-button @click="showPipeline">地下管网</el-button>
-      </div> -->
     </el-header>
     <el-main class="main">
-      <img
-        v-if="isOverview"
-        alt="riverway"
-        src="@/assets/riverway.jpg"
-        class="responsive-img"
-      />
-      <div v-else class="map" id="map">
+      <div class="map" id="map">
         <el-amap
           mapStyle="amap://styles/darkblue"
           :center="center"
           :zoom="zoom"
           :scrollWheel="true"
           @init="init"
+          @zoomchange="onZoomChange"
         >
-          <!-- 整体区域图 -->
-          <!-- <el-amap-polygon
-            :visible="integralVisible"
-            :path="polygon.path"
-            v-model:fillColor="polygon.fillColor"
-            v-model:strokeColor="polygon.strokeColor"
-            :strokeStyle="polygon.strokeStyle"
-          /> -->
           <!-- 区划图 -->
           <el-amap-polygon
             :visible="polygonVisible"
@@ -282,15 +264,19 @@
             :showDir="false"
           />
           <!-- 小沙河 -->
-          <el-amap-polyline
-            :visible="integralVisible"
-            :path="xiaoShaHeLine.linePath"
+          <!-- <el-amap-polyline
+            :visible="false"
+            :path="xiaoShaHe.linePath"
             :strokeColor="'#0000FF'"
             :strokeWeight="7"
             :lineCap="'round'"
             :lineJoin="'round'"
             :showDir="true"
             :clickable="true"
+          /> -->
+          <el-amap-polygon
+            :visible="integralVisible" 
+            :path="xiaoShaHe.path"
             @click="showInfo"
           />
           <el-amap-text
@@ -326,7 +312,29 @@
             }"
             :offset="[-30, -30]"
           />
-          <el-amap-text
+          <el-amap-marker
+            :visible="infoVisible"
+            :position="[104.08158744025306, 30.697328218462844]" 
+            :title="'起点'"
+            :offset="[-16, -16]"
+            :zIndex="5"
+          >
+            <div>
+              <img :style="{width: 32 + 'px'}" src = '@/assets/begin.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-marker
+            :visible="infoVisible"
+            :position="[104.0776,30.676395]" 
+            :title="'终点'"
+            :offset="[-16, -16]"
+            :zIndex="5"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/end.png' />
+            </div>
+          </el-amap-marker>
+          <!-- <el-amap-text
             :visible="infoVisible"
             :position="[104.0776,30.676395]"
             :text-style="{
@@ -345,90 +353,175 @@
               border: 'none'
             }"
             :text="'终点'"
-          />
+          /> -->
+          <!-- <el-amap-marker
+            :visible="infoVisible"
+            :position="[104.07805,30.677615]" 
+            :offset="[-16, -16]"
+            :zIndex="1"
+          >
+            <div>
+              <img :style="{width: 10+(currentZoom-zoom)*10 + 'px'}" src = '@/assets/flowDir.png' />
+            </div>
+          </el-amap-marker> -->
           <!-- 小沙河的桥8座 -->
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.0791638327952, 30.679404508075702]" 
+            :position="[104.07780,30.677068]" 
             :title="'金港兴城桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
-
+            @click="handleClick('jxBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.jxBridgeTestVisible"
+            :position="[104.077807,30.677068]"
+            :text-style="style.commonTextStyle"
+            :text="'金港兴城桥\n[104.077807,30.677068]'"
           />
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.07937541265524, 30.680608819080543]" 
+            :position="[104.07836,30.678295]" 
             :title="'花圃路南一巷桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
+            @click="handleClick('hplBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.hplBridgeTestVisible"
+            :position="[104.07836,30.678295]"
+            :text-style="style.commonTextStyle"
+            :text="'花圃路南一巷桥\n[104.07836,30.678295]'"
           />
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.07897729705518, 30.681972726275713]" 
+            :position="[104.07909,30.679684]" 
             :title="'北极星花园桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
+            @click="handleClick('bjxBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.bjxBridgeTestVisible"
+            :position="[104.07909,30.679684]"
+            :text-style="style.commonTextStyle"
+            :text="'北极星花园桥\n[104.07909,30.679684]'"
           />
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.0785126417478, 30.68414933006988]" 
+            :position="[104.078993,30.681589]" 
             :title="'成都市第八中学桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
+            @click="handleClick('dbzxBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.dbzxBridgeTestVisible"
+            :position="[104.078993,30.681589]"
+            :text-style="style.commonTextStyle"
+            :text="'成都市第八中学桥\n[104.078993,30.681589]'"
           />
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.0797667202456, 30.686036356103575]" 
+            :position="[104.078835,30.683952]" 
             :title="'星胜酒店(金牛万达店)桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
+            @click="handleClick('xsjdBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.xsjdBridgeTestVisible"
+            :position="[104.078835,30.683952]"
+            :text-style="style.commonTextStyle"
+            :text="'星胜酒店(金牛万达店)桥\n[104.078835,30.683952]'"
           />
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.0814764944235, 30.69215659581092]" 
+            :position="[104.080866,30.689907]" 
             :title="'成都荷花逸居酒店桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
+            @click="handleClick('hhyjBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.hhyjBridgeTestVisible"
+            :position="[104.080866,30.689907]"
+            :text-style="style.commonTextStyle"
+            :text="'成都荷花逸居酒店桥\n[104.080866,30.689907]'"
           />
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.08153517273536, 30.696631827260457]" 
+            :position="[104.081362,30.694535]" 
             :title="'东泰地面停车场桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
+            @click="handleClick('dtdmBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.dtdmBridgeTestVisible"
+            :position="[104.081362,30.694535]"
+            :text-style="style.commonTextStyle"
+            :text="'东泰地面停车场桥\n[104.081362,30.694535]'"
           />
            <el-amap-marker
             :visible="infoVisible"
-            :position="[104.0816337986174, 30.697173559877832]" 
+            :position="[104.081462,30.696559]" 
             :title="'一品荷花桥'"
-            :icon="require('@/assets/bridge.png')"
-            :offset="[-30, -30]"
+            :offset="[-32, -32]"
             :zIndex="5"
+            @click="handleClick('yphhBridge')"
+          >
+            <div>
+              <img style="width: 64px;" src = '@/assets/bridge.png' />
+            </div>
+          </el-amap-marker>
+          
+          <el-amap-text
+            :visible="testVisible.yphhBridgeTestVisible"
+            :position="[104.081462,30.696559]"
+            :text-style="style.commonTextStyle"
+            :text="'一品荷花桥\n[104.081462,30.696559]'"
           />
-         
           <!-- 关键建筑 -->
           <el-amap-polygon
             :visible="infoVisible" 
             :path="[[104.079077,30.679229],[104.079613,30.678973],[104.079212,30.678389],[104.07869,30.678577]]"
+            @click="handleClick('学校')"
             @mouseover="handleMouseOver"
             @mouseout="handleMouseOut"
             />
           <el-amap-text
-            :visible="xueXiaoTestVisible"
+            :visible="testVisible.xueXiaoTestVisible"
             :position="[104.079088,30.678787]"
-            :text-style="{
-              color: '#87CEEB',
-              backgroundColor: 'transparent',
-              border: 'none',
-              fontSize: '10px',
-            }"
+            :text-style="style.schoolTextStyle"
             :text="'成都市人民北路小学校'"
           />
           <!-- 水闸 -->
@@ -436,248 +529,452 @@
             :visible="infoVisible"
             :position="[104.072934, 30.67801]" 
             :title="'水闸'"
-            :icon="require('@/assets/sluice.png')"
-            :offset="[-30, -30]"
-          /> 
+            :offset="[-16, -16]"
+            @click="handleClick('水闸')"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/sluice.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.shuiZhaTestVisible"
+            :position="[104.072934,30.67801]"
+            :text-style="style.commonTextStyle"
+            :text="'水闸\n[104.072934,30.67801]'"
+          />
           <!-- 排口 -->
            <!-- 金港兴城 -->
            <el-amap-marker
             :visible="infoVisible"
-            :position="[104.0791638327952, 30.679404508075702]" 
+            :position="[104.07810,30.677456]" 
             :title="'金港兴城排口'"
-            :icon="markerIcon"
-            :offset="[-30, -30]"
+            :offset="[-16, -16]"
             :zIndex="3"
-          /> 
-          <!-- :styles="outletIcon.styles" -->
-          <!-- :icon-style="{
-              size: [32, 32], // 图标尺寸
-              imageSize: [32, 32], // 图标原始尺寸
-              imageOffset: [-20, -20]  // 图标取图位置
-            }" -->
+            @click="handleClick('jxOutLet')"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/outlet.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.jxOutLetTestVisible"
+            :position="[104.07811,30.677456]"
+            :text-style="style.commonTextStyle"
+            :text="'金港兴城排口\n[104.07811,30.677456]'"
+          />
           <!-- 花圃路南一巷1号 -->
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.07937541265524, 30.680608819080543]"
+            :position="[104.079069,30.679401]"
             :title="'花圃路南一巷1号排口'"
-            :icon="require('@/assets/outlet.png')"
-            :offset="[-30, -30]"
+            :offset="[-16, -16]"
             :zIndex="3"
+            @click="handleClick('hpln1OutLet')"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/outlet.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.hpln1OutLetTestVisible"
+            :position="[104.079069,30.679401]"
+            :text-style="style.commonTextStyle"
+            :text="'花圃路南一巷1号排口\n[104.079069,30.679401]'"
           />
           <!-- 花圃路南一巷2号 -->
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.07935643040844, 30.68066909879217]"
+            :position="[104.078886,30.681746]"
             :title="'花圃路南一巷2号排口'"
-            :icon="require('@/assets/outlet.png')"
-            :offset="[-30, -30]"
+            :offset="[-16, -16]"
             :zIndex="3"
+            @click="handleClick('hpln2OutLet')"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/outlet.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.hpln2OutLetTestVisible"
+            :position="[104.078886,30.681746]"
+            :text-style="style.commonTextStyle"
+            :text="'花圃路南一巷2号排口\n[104.078886,30.681746]'"
           />
           <!-- 北极星花园1号 -->
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.07883927186292, 30.68240661257412]"
+            :position="[104.07875,30.682791]"
             :title="'北极星花园1号排口'"
-            :icon="require('@/assets/outlet.png')"
-            :offset="[-30, -30]"
+            :offset="[-16, -16]"
             :zIndex="3"
+            @click="handleClick('bjx1OutLet')"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/outlet.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.bjx1OutLetTestVisible"
+            :position="[104.078764,30.682791]"
+            :text-style="style.commonTextStyle"
+            :text="'北极星花园1号排口\n[104.078764,30.682791]'"
           />
           <!-- 北极星花园2号 -->
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.07875501059632, 30.68267264324175]"
+            :position="[104.080639,30.68959]"
             :title="'北极星花园2号排口'"
-            :icon="require('@/assets/outlet.png')"
-            :offset="[-30, -30]"
+            :offset="[-16, -16]"
+            @click="handleClick('bjx2OutLet')"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/outlet.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.bjx2OutLetTestVisible"
+            :position="[104.080639,30.68959]"
+            :text-style="style.commonTextStyle"
+            :text="'北极星花园2号排口\n[104.080639,30.68959]'"
           />
           <!-- 成都市第八中学 -->
           <el-amap-marker
             :visible="infoVisible"
-            :position="[104.0787124607906, 30.683456905972328]"
+            :position="[104.08140,30.693946]"
             :title="'成都市第八中学排口'"
-            :icon="require('@/assets/outlet.png')"
-            :offset="[-30, -30]"
+            :offset="[-16, -16]"
+            @click="handleClick('dbzxOutLet')"
+          >
+            <div>
+              <img style="width: 32px;" src = '@/assets/outlet.png' />
+            </div>
+          </el-amap-marker>
+          <el-amap-text
+            :visible="testVisible.dbzxOutLetTestVisible"
+            :position="[104.08143,30.693946]"
+            :text-style="style.commonTextStyle"
+            :text="'成都市第八中学排口\n[104.08143,30.693946]'"
           />
           <!-- 城北体育馆 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.07958280142012, 30.68546105344976]"
             :title="'城北体育馆排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
+            @click="handleClick('cbtygOutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.cbtygOutLetTestVisible"
+            :position="[104.07958280142012, 30.68546105344976]"
+            :text-style="style.commonTextStyle"
+            :text="'城北体育馆排口'"
+          /> -->
           <!-- 星胜酒店(金牛万达店) -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.079785483533, 30.686011612193333]"
             :title="'星胜酒店(金牛万达店)排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('xsjdOutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.xsjdOutLetTestVisible"
+            :position="[104.079785483533, 30.686011612193333]"
+            :text-style="style.commonTextStyle"
+            :text="'星胜酒店(金牛万达店)排口'"
+          /> -->
           <!-- 荷花池商业街区 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08107787647263, 30.69074857331893]"
             :title="'荷花池商业街区排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhcOutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhcOutLetTestVisible"
+            :position="[104.08107787647263, 30.69074857331893]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花池商业街区排口'"
+          /> -->
           <!-- 先锋园1号 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08144437388832, 30.69254088950511]"
             :title="'先锋园1号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('xfy1OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.xfy1OutLetTestVisible"
+            :position="[104.08144437388832, 30.69254088950511]"
+            :text-style="style.commonTextStyle"
+            :text="'先锋园1号排口'"
+          /> -->
           <!-- 先锋园2号 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08145450182344, 30.692862380213057]"
             :title="'先锋园2号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('xfy2OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.xfy2OutLetTestVisible"
+            :position="[104.08145450182344, 30.692862380213057]"
+            :text-style="style.commonTextStyle"
+            :text="'先锋园2号排口'"
+          /> -->
           <!-- 荷花金池市场 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08153546967392, 30.69511700794451]"
             :title="'荷花金池市场排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhjcOutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhjcOutLetTestVisible"
+            :position="[104.08153546967392, 30.69511700794451]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花金池市场排口'"
+          /> -->
           <!-- 东泰地面停车场 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08161359561404, 30.696172146227248]"
             :title="'东泰地面停车场排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('dtdmOutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.dtdmOutLetTestVisible"
+            :position="[104.08161359561404, 30.696172146227248]"
+            :text-style="style.commonTextStyle"
+            :text="'东泰地面停车场排口'"
+          /> -->
           <!-- 富丽城1号 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08128458483012, 30.697008789038797]"
             :title="'富丽城1号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('flc1OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.flc1OutLetTestVisible"
+            :position="[104.08128458483012, 30.697008789038797]"
+            :text-style="style.commonTextStyle"
+            :text="'富丽城1号排口'"
+          /> -->
           <!-- 富丽城2号 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08142386174308, 30.697139672596137]"
             :title="'富丽城2号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('flc2OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.flc2OutLetTestVisible"
+            :position="[104.08142386174308, 30.697139672596137]"
+            :text-style="style.commonTextStyle"
+            :text="'富丽城2号排口'"
+          /> -->
           <!-- 一品荷花 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08172249982742, 30.697257075582723]"
             :title="'一品荷花排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('yphhOutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.yphhOutLetTestVisible"
+            :position="[104.08172249982742, 30.697257075582723]"
+            :text-style="style.commonTextStyle"
+            :text="'一品荷花排口'"
+          /> -->
           <!-- 富丽城3号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.0815300861352, 30.69724216328957]"
             :title="'富丽城3号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('flc3OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.flc3OutLetTestVisible"
+            :position="[104.0815300861352, 30.69724216328957]"
+            :text-style="style.commonTextStyle"
+            :text="'富丽城3号排口'"
+          /> -->
           <!-- 荷花金池市场1号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08167990564588, 30.6957557352632]"
             :title="'荷花金池市场1号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhjc1OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhjc1OutLetTestVisible"
+            :position="[104.08167990564588, 30.6957557352632]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花金池市场1号排口'"
+          /> -->
           <!-- 荷花金池市场2号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.0815231458202, 30.695140288356175]"
             :title="'荷花金池市场2号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhjc2OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhjc2OutLetTestVisible"
+            :position="[104.0815231458202, 30.695140288356175]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花金池市场2号排口'"
+          /> -->
           <!-- 荷花金池市场3号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.0814867609284, 30.69492131304467]"
             :title="'荷花金池市场3号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhjc3OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhjc3OutLetTestVisible"
+            :position="[104.0814867609284, 30.69492131304467]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花金池市场3号排口'"
+          /> -->
           <!-- 荷花金池市场4号 -->
-            <el-amap-marker
+            <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08145629217724, 30.693856261963997]"
             :title="'荷花金池市场4号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhjc4OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhjc4OutLetTestVisible"
+            :position="[104.08145629217724, 30.693856261963997]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花金池市场4号排口'"
+          /> -->
           <!-- 荷花名都1号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08140966209164, 30.6931718976778]"
             :title="'荷花名都1号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhmd1OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhmd1OutLetTestVisible"
+            :position="[104.08140966209164, 30.6931718976778]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花名都1号排口'"
+          /> -->
           <!-- 荷花名都2号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08139006329532, 30.69307201341712]"
             :title="'荷花名都2号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhmd2OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhmd2OutLetTestVisible"
+            :position="[104.08139006329532, 30.69307201341712]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花名都2号排口'"
+          /> -->
           <!-- 荷花名都3号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08140557530736, 30.692722291565584]"
             :title="'荷花名都3号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhmd3OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhmd3OutLetTestVisible"
+            :position="[104.08140557530736, 30.692722291565584]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花名都3号排口'"
+          /> -->
           <!-- 荷花名都4号 -->
-            <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.08140630630248, 30.692724393193593]"
             :title="'荷花名都4号排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhmd4OutLet')"
           />
+          <el-amap-text
+            :visible="testVisible.hhmd4OutLetTestVisible"
+            :position="[104.08140630630248, 30.692724393193593]"
+            :text-style="style.commonTextStyle"
+            :text="'荷花名都4号排口'"
+          /> -->
           <!-- 成都荷花逸居酒店 -->
-          <el-amap-marker
+          <!-- <el-amap-marker
             :visible="infoVisible"
             :position="[104.0814764944235, 30.69215659581092]"
             :title="'成都荷花逸居酒店排口'"
             :icon="require('@/assets/outlet.png')"
             :offset="[-30, -30]"
             :zIndex="3"
+            @click="handleClick('hhyjOutLet')"
           />
-            
+          <el-amap-text
+            :visible="testVisible.hhyjOutLetTestVisible"
+            :position="[104.0814764944235, 30.69215659581092]"
+            :text-style="style.commonTextStyle"
+            :text="'成都荷花逸居酒店排口'"
+          /> -->
+
         </el-amap>
       </div>
     </el-main>
@@ -687,25 +984,29 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import 'element-plus/theme-chalk/display.css'
-import { ElAmap,ElAmapIcon} from '@vuemap/vue-amap'
 //import { ArrowDown, Close, Pointer } from "@element-plus/icons-vue";
 let map = null
-const zoom = ref(13)
+const zoom = ref(13)//初始缩放大小,越大地图越大
+const currentZoom = ref(13)
 const init = (e) => {
-  // const marker = new AMap.Marker({
-  //   position: [104.05740358713781, 30.697356042874134],
-  // },
-  // );
-  // e.add(marker);
   map = e
   map.setMapStyle('amap://styles/darkblue')
   console.log('map init: ', map)
+  currentZoom.value = map.getZoom()
 }
+const onZoomChange = (e) => {
+  // 更新缩放值
+  currentZoom.value = e.target.getZoom()
+}
+
+
 const center = ref([104.05740358713781, 30.747356042874134])
 
 //示例图切换
 const polygonVisible = ref(false)
 polygonVisible.value = true
+
+
 
 
 {
@@ -775,58 +1076,6 @@ polygonVisible.value = true
 //     [104.057216, 30.695122],
 //     [104.049852, 30.694667],
 //     [104.0466, 30.699137],
-//   ],
-// })
-
-// const shaheyuan = reactive({
-//   fillColor: '#F8F8FF',
-//   strokeColor: '#00FA9A',
-//   fillOpacity: 0.1,
-//   visible: true,
-//   edit: true,
-//   strokeStyle: 'dashed',
-//   markerPath: [104.052141, 30.71821],
-//   path: [
-//     [104.049574, 30.718583],
-//     [104.053642, 30.720213],
-//     [104.055538, 30.717734],
-//     [104.050956, 30.715765],
-//   ],
-// })
-
-// const youthPalace = reactive({
-//   fillColor: '#F8F8FF',
-//   strokeColor: '#00FA9A',
-//   fillOpacity: 0.1,
-//   visible: true,
-//   edit: true,
-//   strokeStyle: 'dashed',
-//   markerPath: [104.055989, 30.70993],
-//   path: [
-//     [104.052328, 30.709442],
-//     [104.057462, 30.712427],
-//     [104.059545, 30.709586],
-//     [104.054789, 30.708248],
-//   ],
-// })
-
-// const riverway = reactive({
-//   fillColor: '#F8F8FF',
-//   strokeColor: '#00FA9A',
-//   fillOpacity: 1,
-//   visible: true,
-//   edit: true,
-//   strokeStyle: 'dashed',
-//   markerPath: [104.053202, 30.708652],
-//   linePath: [
-//     [104.05596, 30.705658],
-//     [104.058378, 30.70157],
-//   ],
-//   path: [
-//     [104.046498, 30.72186],
-//     [104.044932, 30.722506],
-//     [104.060656, 30.695242],
-//     [104.058032, 30.704141],
 //   ],
 // })
 
@@ -2530,6 +2779,7 @@ polygonVisible.value = true
 
 
 ////区划图
+
 //西安路
 const polygonXianlu = reactive({
   position: [104.043435, 30.673065],
@@ -5514,6 +5764,7 @@ const polygonTianhuizhen = reactive({
     ],
   ],
 })
+
 ////一二三环线
 const loopLine = reactive({
   fillColor: '#F8F8FF',
@@ -5642,7 +5893,6 @@ const loopLine = reactive({
     [104.04057447963967, 30.667293563516985],
     [104.04058614729894, 30.66656993157852],
     [104.04062457000911, 30.666003102874615],
-    [104.040995, 30.666801],
     [104.04083149354592, 30.658236794522605],
     [104.04085821482866, 30.65768828242611],
     [104.04087658182368, 30.65722979017636],
@@ -5771,9 +6021,7 @@ const loopLine = reactive({
     [104.07405509212936, 30.6336127293132],
     [104.07481629190836, 30.633656976592665],
     [104.0755290546916, 30.63367613335597],
-    [104.07581615605396, 30.63369146198115],
-    [104.072912, 30.633483],
-    [104.081567, 30.636567],
+    [104.0759, 30.633653],
     [104.08481116678377, 30.637748099722728],
     [104.08511649473168, 30.637970077759295],
     [104.08531503603878, 30.638058587462748],
@@ -5881,15 +6129,7 @@ const loopLine = reactive({
     [104.09677183303803, 30.675193384308965],
     [104.09623161470344, 30.675676835804747],
     [104.0957013853585, 30.676138600160897],
-    [104.09539124968472, 30.676513699868156],
-    [104.09545462516498, 30.676725479156616],
-    [104.0954596365118, 30.676907230645813],
-    [104.09550801176248, 30.677272410232057],
-    [104.09582819211164, 30.67775437228464],
-    [104.09628176037629, 30.67819800626705],
-    [104.0964651847282, 30.678356448960155],
-    [104.0964501790306, 30.67837812271508],
-    [104.0965335541932, 30.678469847753227],
+    [104.095349, 30.676447],
     [104.08445460535748, 30.68204760413992],
   ],
   linePath2: [
@@ -6417,21 +6657,9 @@ const loopLine = reactive({
     [104.10367238082986, 30.683777547207686],
     [104.10333237904806, 30.684417884590037],
     [104.10298070127374, 30.68501319737138],
-    [104.10263401191388, 30.685481778837172],
-    [104.10253234927946, 30.68586196407446],
-    [104.10260071041452, 30.686232132030472],
-    [104.10270073681426, 30.68648891099353],
-    [104.10293911653984, 30.686802370668214],
-    [104.10324417054544, 30.687177516702043],
-    [104.10361423290124, 30.687694384231257],
-    [104.10411263643152, 30.688326282285193],
-    [104.10471103337908, 30.68899150249637],
-    [104.10528274572968, 30.689653377921225],
-    [104.10576277661306, 30.69030858951224],
-    [104.10625945875914, 30.69089041983987],
-    [104.10673112877484, 30.691437229777335],
-    [104.10720612036305, 30.6919690225373],
-    [104.10766277253526, 30.69255917227061],
+    [104.102013, 30.68565],
+    [104.10036029560784, 30.68678578502841],
+
   ],
   linePath3: [
     [104.15251810416434, 30.70739575980452],
@@ -7169,38 +7397,53 @@ const loopLine = reactive({
     [104.13944517632416, 30.710347638395596],
     [104.14009925928404, 30.71015828440668],
     [104.1407466725131, 30.709968928975805],
-    [104.14140073373213, 30.70983958229679],
-    [104.14205478474906, 30.709748576864776],
-    [104.14266056262372, 30.70967931020071],
-    [104.1433578573202, 30.70953319265511],
-    [104.14415165917455, 30.7093669064498],
     [104.1449753967212, 30.709157204967777],
-    [104.14575751729396, 30.70899591010815],
-    [104.14629332951854, 30.708578199631372],
-    [104.14656121714889, 30.708040849668077],
-    [104.147030465289, 30.707781646251725],
-    [104.14758126980529, 30.70803588943971],
-    [104.14771774644431, 30.70860928158589],
-    [104.14771278332525, 30.70920791319023],
-    [104.14776939413808, 30.709923169442497],
-    [104.1478143587748, 30.710678464200644],
-    [104.1478543274085, 30.711352060938776],
-    [104.14783937545003, 30.71185066109968],
-    [104.14786601746349, 30.712222466057003],
-    [104.14788100596914, 30.71248090124574],
-    [104.14787102863636, 30.712619318128187],
-    [104.14786936479452, 30.7126226557666],
+    [104.148462, 30.708763],
+    [104.15251810416434, 30.70739575980452],
   ],
 })
 //小沙河
-const xiaoShaHeLine = reactive({
+const xiaoShaHe = reactive({
   fillColor: '#F8F8FF',
   strokeColor: '#00FA9A',
   fillOpacity: 1,
   visible: true,
   edit: true,
   strokeStyle: 'dashed',
-  bridgephoto:'@/assets/bridge.png',
+  path:[
+    [
+      [104.077505,30.676377],
+      [104.077612,30.676848],
+      [104.078012,30.677651],
+      [104.078306,30.678488],
+      [104.079146,30.679968],
+      [104.079244,30.680222],
+      [104.079212,30.6806],
+      [104.078499,30.683094],
+      [104.078486,30.68334],
+      [104.078694,30.68389],
+      [104.080081,30.687099],
+      [104.080159,30.688156],
+      [104.080247,30.68863],
+      [104.080845,30.69011],
+      [104.08099,30.690649],
+      [104.081271,30.694678],
+      [104.081423,30.697217],
+      [104.081568,30.697215],
+      [104.081436,30.694692],
+      [104.081196,30.690485],
+      [104.080413,30.688656],
+      [104.080248,30.687067],
+      [104.078686,30.683395],
+      [104.078662,30.683092],
+      [104.079427,30.680245],
+      [104.079179,30.6796],
+      [104.078523,30.678433],
+      [104.078174,30.677591],
+      [104.077816,30.676828],
+      [104.07775,30.676346],
+    ],
+  ],
   linePath: [
     [104.0776,30.676395],
     [104.07818731436316, 30.677553837630608],
@@ -7819,43 +8062,177 @@ function showInfo(){
   infoVisible.value = !infoVisible.value
 }
 //重要建筑鼠标移入移出事件
-const xueXiaoTestVisible = ref(false)
-function handleMouseOver(){
-  xueXiaoTestVisible.value = true
+// function handleMouseOver(){
+//   xueXiaoTestVisible.value = true
+// }
+// function handleMouseOut() {
+//   xueXiaoTestVisible.value = false
+// }
+////鼠标点击显示名称
+const testVisible = reactive({
+  xueXiaoTestVisible: false,
+  shuiZhaTestVisible: false,
+  jxBridgeTestVisible: false,
+  hplBridgeTestVisible: false,
+  bjxBridgeTestVisible: false,
+  dbzxBridgeTestVisible: false,
+  xsjdBridgeTestVisible: false,
+  hhyjBridgeTestVisible: false,
+  dtdmBridgeTestVisible: false,
+  yphhBridgeTestVisible: false,
+  jxOutLetTestVisible: false,
+  hpln1OutLetTestVisible: false,
+  hpln2OutLetTestVisible: false,
+  bjx1OutLetTestVisible: false,
+  bjx2OutLetTestVisible: false,
+  dbzxOutLetTestVisible: false,
+  cbtygOutLetTestVisible: false,
+  xsjdOutLetTestVisible: false,
+  hhcOutLetTestVisible: false,
+  xfy1OutLetTestVisible: false,
+  xfy2OutLetTestVisible: false,
+  hhjcOutLetTestVisible: false,
+  dtdmOutLetTestVisible: false,
+  flc1OutLetTestVisible: false,
+  flc2OutLetTestVisible: false,
+  yphhOutLetTestVisible: false,
+  flc3OutLetTestVisible: false,
+  hhjc1OutLetTestVisible: false,
+  hhjc2OutLetTestVisible: false,
+  hhjc3OutLetTestVisible: false,
+  hhjc4OutLetTestVisible: false,
+  hhmd1OutLetTestVisible: false,
+  hhmd2OutLetTestVisible: false,
+  hhmd3OutLetTestVisible: false,
+  hhmd4OutLetTestVisible: false,
+  hhyjOutLetTestVisible: false,
+})
+function handleClick(name){
+  if(name=='水闸'){
+    testVisible.shuiZhaTestVisible = !testVisible.shuiZhaTestVisible
+  }
+  if(name=='学校'){
+    testVisible.xueXiaoTestVisible = !testVisible.xueXiaoTestVisible
+  }
+  if(name=='jxBridge'){
+    testVisible.jxBridgeTestVisible = !testVisible.jxBridgeTestVisible
+  }
+  if(name=='hplBridge'){
+    testVisible.hplBridgeTestVisible = !testVisible.hplBridgeTestVisible
+  }
+  if(name=='bjxBridge'){
+    testVisible.bjxBridgeTestVisible = !testVisible.bjxBridgeTestVisible
+  }
+  if(name=='dbzxBridge'){
+    testVisible.dbzxBridgeTestVisible = !testVisible.dbzxBridgeTestVisible
+  }
+  if(name=='xsjdBridge'){
+    testVisible.xsjdBridgeTestVisible = !testVisible.xsjdBridgeTestVisible
+  }
+  if(name=='hhyjBridge'){
+    testVisible.hhyjBridgeTestVisible = !testVisible.hhyjBridgeTestVisible
+  }
+  if(name=='dtdmBridge'){
+    testVisible.dtdmBridgeTestVisible = !testVisible.dtdmBridgeTestVisible
+  }
+  if(name=='yphhBridge'){
+    testVisible.yphhBridgeTestVisible = !testVisible.yphhBridgeTestVisible
+  }
+  if(name=='jxOutLet'){
+    testVisible.jxOutLetTestVisible = !testVisible.jxOutLetTestVisible
+  }
+  if(name=='hpln1OutLet'){
+    testVisible.hpln1OutLetTestVisible = !testVisible.hpln1OutLetTestVisible
+  }
+  if(name=='hpln2OutLet'){
+    testVisible.hpln2OutLetTestVisible = !testVisible.hpln2OutLetTestVisible
+  }
+  if(name=='bjx1OutLet'){
+    testVisible.bjx1OutLetTestVisible = !testVisible.bjx1OutLetTestVisible
+  }
+  if(name=='bjx2OutLet'){
+    testVisible.bjx2OutLetTestVisible = !testVisible.bjx2OutLetTestVisible
+  }
+  if(name=='dbzxOutLet'){
+    testVisible.dbzxOutLetTestVisible = !testVisible.dbzxOutLetTestVisible
+  }
+  if(name=='cbtygOutLet'){
+    testVisible.cbtygOutLetTestVisible = !testVisible.cbtygOutLetTestVisible
+  }
+  if(name=='xsjdOutLet'){
+    testVisible.xsjdOutLetTestVisible = !testVisible.xsjdOutLetTestVisible
+  }
+  if(name=='hhcOutLet'){
+    testVisible.hhcOutLetTestVisible = !testVisible.hhcOutLetTestVisible
+  }
+  if(name=='xfy1OutLet'){
+    testVisible.xfy1OutLetTestVisible = !testVisible.xfy1OutLetTestVisible
+  }
+  if(name=='xfy2OutLet'){
+    testVisible.xfy2OutLetTestVisible = !testVisible.xfy2OutLetTestVisible
+  }
+  if(name=='hhjcOutLet'){
+    testVisible.hhjcOutLetTestVisible = !testVisible.hhjcOutLetTestVisible
+  }
+  if(name=='dtdmOutLet'){
+    testVisible.dtdmOutLetTestVisible = !testVisible.dtdmOutLetTestVisible
+  }
+  if(name=='flc1OutLet'){
+    testVisible.flc1OutLetTestVisible = !testVisible.flc1OutLetTestVisible
+  }
+  if(name=='flc2OutLet'){
+    testVisible.flc2OutLetTestVisible = !testVisible.flc2OutLetTestVisible
+  }
+  if(name=='yphhOutLet'){
+    testVisible.yphhOutLetTestVisible = !testVisible.yphhOutLetTestVisible
+  }
+  if(name=='flc3OutLet'){
+    testVisible.flc3OutLetTestVisible = !testVisible.flc3OutLetTestVisible
+  }
+  if(name=='hhjc1OutLet'){
+    testVisible.hhjc1OutLetTestVisible = !testVisible.hhjc1OutLetTestVisible
+  }
+  if(name=='hhjc2OutLet'){
+    testVisible.hhjc2OutLetTestVisible = !testVisible.hhjc2OutLetTestVisible
+  }
+  if(name=='hhjc3OutLet'){
+    testVisible.hhjc3OutLetTestVisible = !testVisible.hhjc3OutLetTestVisible
+  }
+  if(name=='hhjc4OutLet'){
+    testVisible.hhjc4OutLetTestVisible = !testVisible.hhjc4OutLetTestVisible
+  }
+  if(name=='hhmd1OutLet'){
+    testVisible.hhmd1OutLetTestVisible = !testVisible.hhmd1OutLetTestVisible
+  }
+  if(name=='hhmd2OutLet'){
+    testVisible.hhmd2OutLetTestVisible = !testVisible.hhmd2OutLetTestVisible
+  }
+  if(name=='hhmd3OutLet'){
+    testVisible.hhmd3OutLetTestVisible = !testVisible.hhmd3OutLetTestVisible
+  }
+  if(name=='hhmd4OutLet'){
+    testVisible.hhmd4OutLetTestVisible = !testVisible.hhmd4OutLetTestVisible
+  }
+  if(name=='hhyjOutLet'){
+    testVisible.hhyjOutLetTestVisible = !testVisible.hhyjOutLetTestVisible
+  }
 }
-function handleMouseOut() {
-  xueXiaoTestVisible.value = false
-}
+const style = reactive({
+  schoolTextStyle:{
+    color: '#87CEEB',
+    backgroundColor: 'transparent',
+    border: 'none',
+    fontSize: '10px',
+  },
+  commonTextStyle:{
+    color: '#87CEEB',
+    backgroundColor: 'transparent',
+    border: 'none',
+    fontSize: '14px',
+    whiteSpace: 'normal',
+  }
+})
 
-// va icon = new map.Icon({
-//     image : 'http://vdata.amap.com/icons/b18/1/2.png',//图片大小为24px*24px
-//     //icon可缺省，缺省时为默认的蓝色水滴图标，
-//     size : new map.Size(24,24)
-// });
-
-const markerIcon = new ElAmapIcon({
-  size: new ElAmapIcon.Size(30, 30), // 图标尺寸
-  image: require('@/assets/outlet.png'), // 图标图片路径
-  imageSize: new ElAmapIcon.Size(32, 32) // 图标原始尺寸
-});
-
-// const outletIcon = ref({
-//     styles:[{
-//       icon:{
-//         img: 'https://a.amap.com/jsapi_demos/static/resource/img/qiniandian.png',
-//         size: [128, 160], 
-//         // imageSize: [32, 32], // 图标原始尺寸
-//         // imageOffset: [-20, -20],
-//         anchor: 'bottom-center',
-//         scaleFactor: 2,
-//         maxScale: 2,  
-//         minScale: 0.125
-//       },
-//       label: {  
-//         content: '祈年殿',
-//       }
-//     }]
-// })
 
 </script>
 
